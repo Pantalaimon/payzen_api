@@ -79,7 +79,7 @@ return array(
 	*/
 
 	'providers' => array(
-
+		// Base
 		'Illuminate\Foundation\Providers\ArtisanServiceProvider',
 		'Illuminate\Auth\AuthServiceProvider',
 		'Illuminate\Cache\CacheServiceProvider',
@@ -106,6 +106,9 @@ return array(
 		'Illuminate\Validation\ValidationServiceProvider',
 		'Illuminate\View\ViewServiceProvider',
 		'Illuminate\Workbench\WorkbenchServiceProvider',
+		
+		// 3rd-party
+		'Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider',
 
 	),
 

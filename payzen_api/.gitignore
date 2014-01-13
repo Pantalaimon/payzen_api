@@ -5,3 +5,4 @@ composer.phar
 Thumbs.db
 /.buildpath
 /.project
+/_ide_helper.php
