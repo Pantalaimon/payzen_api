@@ -45,24 +45,24 @@ return array(
 	*/
 
 	'connections' => array(
-
+/*
 		'sqlite' => array(
 			'driver'   => 'sqlite',
 			'database' => __DIR__.'/../database/production.sqlite',
 			'prefix'   => '',
 		),
-
+*/
 		'mysql' => array(
 			'driver'    => 'mysql',
 			'host'      => 'localhost',
-			'database'  => 'database',
-			'username'  => 'root',
-			'password'  => '',
+			'database'  => 'payzen_api',
+			'username'  => 'payzen_api',
+			'password'  => 'payzen_api',
 			'charset'   => 'utf8',
 			'collation' => 'utf8_unicode_ci',
 			'prefix'    => '',
 		),
-
+/*
 		'pgsql' => array(
 			'driver'   => 'pgsql',
 			'host'     => 'localhost',
@@ -82,7 +82,7 @@ return array(
 			'password' => '',
 			'prefix'   => '',
 		),
-
+*/
 	),
 
 	/*
