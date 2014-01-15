@@ -5,7 +5,9 @@
 	"license": "MIT",
 	"require": {
 		"laravel/framework": "4.1.*",
-		"barryvdh/laravel-ide-helper": "1.*"
+		"barryvdh/laravel-ide-helper": "1.*",
+		"way/generators": "dev-master",
+		"unikent/curl": "dev-master"
 	},
 	"autoload": {
 		"classmap": [
