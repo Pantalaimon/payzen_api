@@ -1,7 +1,7 @@
 <?php
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-class CreateAvalaibleMethodsTable extends Migration {
+class CreateAvailableMethodsTable extends Migration {
 
 	/**
 	 * Run the migrations.
@@ -9,7 +9,7 @@ class CreateAvalaibleMethodsTable extends Migration {
 	 * @return void
 	 */
 	public function up() {
-		Schema::create( 'avalaibleMethods', function (Blueprint $table) {
+		Schema::create( 'availableMethods', function (Blueprint $table) {
 			$table->increments( 'id' );
 			$table->unsignedInteger( 'charge_id' );
 			$table->string( 'method' );
@@ -25,6 +25,6 @@ class CreateAvalaibleMethodsTable extends Migration {
 	 * @return void
 	 */
 	public function down() {
-		Schema::drop( 'avalaibleMethods' );
+		Schema::drop( 'availableMethods' );
 	}
 }

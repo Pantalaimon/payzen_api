@@ -2,8 +2,8 @@
 
 @section('main')
 
-<h1>Edit AvalaibleMethod</h1>
-{{ Form::model($avalaibleMethod, array('method' => 'PATCH', 'route' => array('avalaibleMethods.update', $avalaibleMethod->id))) }}
+<h1>Edit AvailableMethod</h1>
+{{ Form::model($availableMethod, array('method' => 'PATCH', 'route' => array('availableMethods.update', $availableMethod->id))) }}
 	<ul>
         <li>
             {{ Form::label('charge_id', 'Charge_id:') }}
@@ -17,7 +17,7 @@
 
 		<li>
 			{{ Form::submit('Update', array('class' => 'btn btn-info')) }}
-			{{ link_to_route('avalaibleMethods.show', 'Cancel', $avalaibleMethod->id, array('class' => 'btn')) }}
+			{{ link_to_route('availableMethods.show', 'Cancel', $availableMethod->id, array('class' => 'btn')) }}
 		</li>
 	</ul>
 {{ Form::close() }}

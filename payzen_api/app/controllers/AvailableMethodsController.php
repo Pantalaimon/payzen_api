@@ -1,17 +1,17 @@
 <?php
 
-class AvalaibleMethodsController extends BaseController {
+class AvailableMethodsController extends BaseController {
 
 	/**
-	 * AvalaibleMethod Repository
+	 * AvailableMethod Repository
 	 *
-	 * @var AvalaibleMethod
+	 * @var AvailableMethod
 	 */
-	protected $avalaibleMethod;
+	protected $availableMethod;
 
-	public function __construct(AvalaibleMethod $avalaibleMethod)
+	public function __construct(AvailableMethod $availableMethod)
 	{
-		$this->avalaibleMethod = $avalaibleMethod;
+		$this->availableMethod = $availableMethod;
 	}
 
 	/**
@@ -21,9 +21,9 @@ class AvalaibleMethodsController extends BaseController {
 	 */
 	public function index()
 	{
-		$avalaibleMethods = $this->avalaibleMethod->all();
+		$availableMethods = $this->availableMethod->all();
 
-		return View::make('avalaibleMethods.index', compact('avalaibleMethods'));
+		return View::make('availableMethods.index', compact('availableMethods'));
 	}
 
 	/**
@@ -33,7 +33,7 @@ class AvalaibleMethodsController extends BaseController {
 	 */
 	public function create()
 	{
-		return View::make('avalaibleMethods.create');
+		return View::make('availableMethods.create');
 	}
 
 	/**
@@ -44,16 +44,16 @@ class AvalaibleMethodsController extends BaseController {
 	public function store()
 	{
 		$input = Input::all();
-		$validation = Validator::make($input, AvalaibleMethod::$rules);
+		$validation = Validator::make($input, AvailableMethod::$rules);
 
 		if ($validation->passes())
 		{
-			$this->avalaibleMethod->create($input);
+			$this->availableMethod->create($input);
 
-			return Redirect::route('avalaibleMethods.index');
+			return Redirect::route('availableMethods.index');
 		}
 
-		return Redirect::route('avalaibleMethods.create')
+		return Redirect::route('availableMethods.create')
 			->withInput()
 			->withErrors($validation)
 			->with('message', 'There were validation errors.');
@@ -67,9 +67,9 @@ class AvalaibleMethodsController extends BaseController {
 	 */
 	public function show($id)
 	{
-		$avalaibleMethod = $this->avalaibleMethod->findOrFail($id);
+		$availableMethod = $this->availableMethod->findOrFail($id);
 
-		return View::make('avalaibleMethods.show', compact('avalaibleMethod'));
+		return View::make('availableMethods.show', compact('availableMethod'));
 	}
 
 	/**
@@ -80,14 +80,14 @@ class AvalaibleMethodsController extends BaseController {
 	 */
 	public function edit($id)
 	{
-		$avalaibleMethod = $this->avalaibleMethod->find($id);
+		$availableMethod = $this->availableMethod->find($id);
 
-		if (is_null($avalaibleMethod))
+		if (is_null($availableMethod))
 		{
-			return Redirect::route('avalaibleMethods.index');
+			return Redirect::route('availableMethods.index');
 		}
 
-		return View::make('avalaibleMethods.edit', compact('avalaibleMethod'));
+		return View::make('availableMethods.edit', compact('availableMethod'));
 	}
 
 	/**
@@ -99,17 +99,17 @@ class AvalaibleMethodsController extends BaseController {
 	public function update($id)
 	{
 		$input = array_except(Input::all(), '_method');
-		$validation = Validator::make($input, AvalaibleMethod::$rules);
+		$validation = Validator::make($input, AvailableMethod::$rules);
 
 		if ($validation->passes())
 		{
-			$avalaibleMethod = $this->avalaibleMethod->find($id);
-			$avalaibleMethod->update($input);
+			$availableMethod = $this->availableMethod->find($id);
+			$availableMethod->update($input);
 
-			return Redirect::route('avalaibleMethods.show', $id);
+			return Redirect::route('availableMethods.show', $id);
 		}
 
-		return Redirect::route('avalaibleMethods.edit', $id)
+		return Redirect::route('availableMethods.edit', $id)
 			->withInput()
 			->withErrors($validation)
 			->with('message', 'There were validation errors.');
@@ -123,9 +123,9 @@ class AvalaibleMethodsController extends BaseController {
 	 */
 	public function destroy($id)
 	{
-		$this->avalaibleMethod->find($id)->delete();
+		$this->availableMethod->find($id)->delete();
 
-		return Redirect::route('avalaibleMethods.index');
+		return Redirect::route('availableMethods.index');
 	}
 
 }

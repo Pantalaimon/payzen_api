@@ -2,9 +2,9 @@
 
 @section('main')
 
-<h1>Create AvalaibleMethod</h1>
+<h1>Create AvailableMethod</h1>
 
-{{ Form::open(array('route' => 'avalaibleMethods.store')) }}
+{{ Form::open(array('route' => 'availableMethods.store')) }}
 	<ul>
         <li>
             {{ Form::label('charge_id', 'Charge_id:') }}
