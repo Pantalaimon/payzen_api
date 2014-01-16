@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		{{ HTML::style("css/bootstrap-combined.min.css" }}
+		{{ HTML::style("css/bootstrap-combined.min.css") }}
 		<style>
 			table form { margin-bottom: 0; }
 			form ul { margin-left: 0; list-style: none; }
