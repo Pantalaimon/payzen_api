@@ -13,7 +13,7 @@ class DatabaseSeeder extends Seeder {
 
 		// $this->call('UserTableSeeder');
 		$this->call('ChargesTableSeeder');
-		$this->call('AvalaiblemethodsTableSeeder');
+		$this->call('AvailablemethodsTableSeeder');
 		$this->call('ContextsTableSeeder');
 		$this->call('MessagesTableSeeder');
 		$this->call('UsedmethodsTableSeeder');

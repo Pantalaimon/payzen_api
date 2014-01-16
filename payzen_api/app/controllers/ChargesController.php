@@ -1,183 +1,231 @@
 <?php
+use PayzenApi\Constants;
+use PayzenApi\LegacyApi;
+use PayzenApi\PageInfo;
 
 class ChargesController extends BaseController {
 
-	/**
-	 * Charge Repository
-	 *
-	 * @var Charge
-	 */
-	protected $charge;
+    /**
+     * Charge Repository
+     *
+     * @var Charge
+     */
+    protected $charge;
 
-	public function __construct(Charge $charge)
-	{
-		$this->charge = $charge;
-	}
+    public function __construct(Charge $charge) {
+        $this->charge = $charge;
+    }
 
-	/**
-	 * Display a listing of the resource.
-	 *
-	 * @return Response
-	 */
-	public function index()
-	{
-		$charges = $this->charge->all();
+    /**
+     * Display a listing of the resource.
+     *
+     * @return Response
+     */
+    public function index() {
+        $charges = $this->charge->all();
 
-		return View::make('charges.index', compact('charges'));
-	}
+        return View::make('charges.index', compact('charges'));
+    }
 
-	/**
-	 * Show the form for creating a new resource.
-	 *
-	 * @return Response
-	 */
-	public function create()
-	{
-		return View::make('charges.create');
-	}
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return Response
+     */
+    public function create() {
+        return View::make('charges.create');
+    }
 
-	/**
-	 * Store a newly created resource in storage.
-	 *
-	 * @return Response
-	 */
-	public function store()
-	{
-		$input = Input::all();
-		$validation = Validator::make($input, Charge::$rules);
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @return Response
+     */
+    public function store() {
+        $input = Input::all();
+        $validation = Validator::make($input, Charge::$rules);
 
-		if ($validation->passes())
-		{
-			$this->charge->create($input);
+        if ($validation->passes()) {
+            // $this->charge->create($input);
+            $shop_id = Input::get("shop_id");
+            $shop_key = Input::get("shop_key");
 
-			return Redirect::route('charges.index');
-		}
+            $json = json_encode(Input::only([
+                'amount',
+                'currency'
+            ]), JSON_PRETTY_PRINT);
+            $url = URL::route('postChargeForPos', [
+                "urlShopId" => $shop_id
+            ]);
 
-		return Redirect::route('charges.create')
-			->withInput()
-			->withErrors($validation)
-			->with('message', 'There were validation errors.');
-	}
+            // Call API
+            $curl = new Curl();
+            $curl->http_login($shop_id . '_' . $shop_key, "");
+            $curl->http_header('Content-Type', 'application/json');
+            $curl->http_header('Accept', 'application/json');
+            $curl->ssl(Config::get("payzenapi.ssl_verifypeer"));
+            $response = $curl->simple_post($url, $json);
 
-	/**
-	 * Display the specified resource.
-	 *
-	 * @param  int  $id
-	 * @return Response
-	 */
-	public function show($id)
-	{
-		$charge = $this->charge->findOrFail($id);
+            // Display result
+            if (! $response) {
+                $response = "\nFAILED :\n" . $curl->debug(true) . $response;
+            }
+            return View::make('api_debug')->with('url', $url)
+                ->with('json', $json)
+                ->with('response', var_export($response, true));
+        }
 
-		return View::make('charges.show', compact('charge'));
-	}
+        return Redirect::route('charges.create')->withInput()
+            ->withErrors($validation)
+            ->with('message', 'There were validation errors.');
+    }
 
-	/**
-	 * Show the form for editing the specified resource.
-	 *
-	 * @param  int  $id
-	 * @return Response
-	 */
-	public function edit($id)
-	{
-		$charge = $this->charge->find($id);
+    /**
+     * Display the specified resource.
+     *
+     * @param int $id
+     * @return Response
+     */
+    public function show($id) {
+        $charge = $this->charge->findOrFail($id);
 
-		if (is_null($charge))
-		{
-			return Redirect::route('charges.index');
-		}
+        return View::make('charges.show', compact('charge'));
+    }
 
-		return View::make('charges.edit', compact('charge'));
-	}
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param int $id
+     * @return Response
+     */
+    public function edit($id) {
+        $charge = $this->charge->find($id);
 
-	/**
-	 * Update the specified resource in storage.
-	 *
-	 * @param  int  $id
-	 * @return Response
-	 */
-	public function update($id)
-	{
-		$input = array_except(Input::all(), '_method');
-		$validation = Validator::make($input, Charge::$rules);
+        if (is_null($charge)) {
+            return Redirect::route('charges.index');
+        }
 
-		if ($validation->passes())
-		{
-			$charge = $this->charge->find($id);
-			$charge->update($input);
+        return View::make('charges.edit', compact('charge'));
+    }
 
-			return Redirect::route('charges.show', $id);
-		}
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param int $id
+     * @return Response
+     */
+    public function update($id) {
+        $input = array_except(Input::all(), '_method');
+        $validation = Validator::make($input, Charge::$rules);
 
-		return Redirect::route('charges.edit', $id)
-			->withInput()
-			->withErrors($validation)
-			->with('message', 'There were validation errors.');
-	}
+        if ($validation->passes()) {
+            $charge = $this->charge->find($id);
+            $charge->update($input);
 
-	/**
-	 * Remove the specified resource from storage.
-	 *
-	 * @param  int  $id
-	 * @return Response
-	 */
-	public function destroy($id)
-	{
-		$this->charge->find($id)->delete();
+            return Redirect::route('charges.show', $id);
+        }
 
-		return Redirect::route('charges.index');
-	}
+        return Redirect::route('charges.edit', $id)->withInput()
+            ->withErrors($validation)
+            ->with('message', 'There were validation errors.');
+    }
 
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param int $id
+     * @return Response
+     */
+    public function destroy($id) {
+        $this->charge->find($id)->delete();
 
-	function postChargeForPos($urlShopId) {
-		$request = Request::instance();
+        return Redirect::route('charges.index');
+    }
 
-		// Filled from "identify_shop" filter
-		$shopId = $request->attributes->get( \PayzenApi\Constants::SHOP_ID );
-		$shopKey = $request->attributes->get( \PayzenApi\Constants::SHOP_KEY );
+    function postChargeForPos($urlShopId) {
+        // return "input:" . Input::all() . " json" . Input::json();
+        $request = Request::instance();
 
-		// Check consistency, just for fun
-		if ($reqShopId != $urlShopId) {
-			return App::abort( 400, "Incoherent shop id !" );
-		}
+        // Filled from "identify_shop" filter
+        $shopId = $request->attributes->get(\PayzenApi\Constants::SHOP_ID);
+        $shopKey = $request->attributes->get(\PayzenApi\Constants::SHOP_KEY);
 
-		// Json, http, who cares ? manage it all !
-		$params = Input::isJson() ? ( array ) Input::json() : Input::all();
+        // Check consistency, just for fun
+        if ($shopId != $urlShopId) {
+            return App::abort(400, "Incoherent shop id !");
+        }
 
-		// TODO validation des sous-tableaux via le validator
-		$validation = Validator::make( $params, [
-				"amount" => "required|numeric|min:0.00001",
-				"currency" => "required|alpha|size:3"
+        // Json, http, who cares ? manage it all !
+        $params = Input::isJson() ? Input::json()->all() : Input::all();
+
+        // TODO validation des sous-tableaux via le validator
+        $validation = Validator::make($params, [
+            "amount" => "required|numeric|min:0.00001",
+            "currency" => "required|alphanum|size:3"
 				/* "available_methods" => "",
 				 "available_instruments" => ""
 		*/
-				] );
+				]);
 
-		if (! $validation->passes()) {
-			return App::abort( 400, $validation->errors() );
-		}
+        // look for currency by alpha or num code
+        $currency_code = strtolower(array_get($params, "currency", ""));
+        $currency = \Currency::where('alpha3', '=', $currency_code)->orWhere('numeric', '=', $currency_code)->first();
+        if (! $currency) {
+            throw new \Exception("Unsupported currency : " . $currency_code); // TODO better exception
+        }
 
-		$available = $params ["available_methods"];
-		$selected = $params ["available_instruments"];
+        if (! $validation->passes()) {
+            return App::abort(400, $validation->errors());
+        }
 
-		$api = new LegacyApi( $urlShopId, $shopKey );
+        $available = array_get($params, "available_methods", []);
+        $selected = array_get($params, "available_instruments", []);
 
-		$params ["url_return"] = Url::route( "LegacyController@getReturn" ); // TODO map route
-		$formData = $api->generateFormData( $params );
-		$html = $api->postForm( $formData );
-		$info = $api->parsePage($html);
+        $params["url_return"] = URL::action("RedirectController@getReturn");
+        // Call and parse
+        $api = new LegacyApi();
+        $api->init($urlShopId, $shopKey);
+        $api->postForm($api->generateFormData($params, $currency), $html, $headers, $cookies);
+        $info = $api->parsePage($html, $cookies);
 
-		if($info->state==PageInfo::STATE_ERROR){
-			return App::abort(500,"Error when calling payzen");
-		}
+        // Check ok
+        if ($info->state == PageInfo::STATE_ERROR) {
+            return App::abort(500, "Error when calling payzen");
+        }
 
+        // save Charge
+        $charge = new Charge();
+        $charge->amount = $params['amount'];
+        $charge->currency = $currency->alpha3;
+        $charge->shop_id = $shopId;
+        $charge->shop_key = $shopKey;
+        $charge->status = Charge::STATUS_CREATED;
+        $charge->save();
 
-		// TODO parse and get info
+        // attach context
+        $context = new Context();
+        $context->trans_date = $api->trans_date;
+        $context->trans_id = $api->trans_id;
+        $context->trans_time = $api->trans_timestamp;
+        $context->cache_id = $info->cache_id;
+        $context->locale = $info->locale;
+        $context->status = Context::STATUS_CREATED;
+        $context = $charge->contexts()->save($context);
 
-		// TODO si erreur KO
+        // create/refresh persisted available methods
+        $availableMethods = [];
+        foreach ($info->card_types as $method) {
+            $availableMethod = new AvailableMethod();
+            $availableMethod->setAttribute('method', $method);
+            $availableMethods[] = $availableMethod;
+        }
+        $charge->availableMethods()->delete();
+        $charge->availableMethods()->saveMany($availableMethods);
 
-		// TODO new Charge
+        return $this->displayCharge($charge, Input::wantsJson());
+    }
 
-		// TODO new context
-	}
+    private function displayCharge(\Charge $charge, $json = true) {
+        return $charge->toJson(JSON_PRETTY_PRINT);//TODO print relations
+    }
 }

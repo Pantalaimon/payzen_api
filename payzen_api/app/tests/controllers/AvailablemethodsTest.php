@@ -3,11 +3,11 @@
 use Mockery as m;
 use Way\Tests\Factory;
 
-class AvalaiblemethodsTest extends TestCase {
+class AvailablemethodsTest extends TestCase {
 
 	public function __construct()
 	{
-		$this->mock = m::mock('Eloquent', 'AvalaibleMethod');
+		$this->mock = m::mock('Eloquent', 'AvailableMethod');
 		$this->collection = m::mock('Illuminate\Database\Eloquent\Collection')->shouldDeferMissing();
 	}
 
@@ -15,8 +15,8 @@ class AvalaiblemethodsTest extends TestCase {
 	{
 		parent::setUp();
 
-		$this->attributes = Factory::avalaibleMethod(['id' => 1]);
-		$this->app->instance('AvalaibleMethod', $this->mock);
+		$this->attributes = Factory::availableMethod(['id' => 1]);
+		$this->app->instance('AvailableMethod', $this->mock);
 	}
 
 	public function tearDown()
@@ -27,14 +27,14 @@ class AvalaiblemethodsTest extends TestCase {
 	public function testIndex()
 	{
 		$this->mock->shouldReceive('all')->once()->andReturn($this->collection);
-		$this->call('GET', 'avalaibleMethods');
+		$this->call('GET', 'availableMethods');
 
-		$this->assertViewHas('avalaibleMethods');
+		$this->assertViewHas('availableMethods');
 	}
 
 	public function testCreate()
 	{
-		$this->call('GET', 'avalaibleMethods/create');
+		$this->call('GET', 'availableMethods/create');
 
 		$this->assertResponseOk();
 	}
@@ -43,18 +43,18 @@ class AvalaiblemethodsTest extends TestCase {
 	{
 		$this->mock->shouldReceive('create')->once();
 		$this->validate(true);
-		$this->call('POST', 'avalaibleMethods');
+		$this->call('POST', 'availableMethods');
 
-		$this->assertRedirectedToRoute('avalaibleMethods.index');
+		$this->assertRedirectedToRoute('availableMethods.index');
 	}
 
 	public function testStoreFails()
 	{
 		$this->mock->shouldReceive('create')->once();
 		$this->validate(false);
-		$this->call('POST', 'avalaibleMethods');
+		$this->call('POST', 'availableMethods');
 
-		$this->assertRedirectedToRoute('avalaibleMethods.create');
+		$this->assertRedirectedToRoute('availableMethods.create');
 		$this->assertSessionHasErrors();
 		$this->assertSessionHas('message');
 	}
@@ -66,9 +66,9 @@ class AvalaiblemethodsTest extends TestCase {
 				   ->once()
 				   ->andReturn($this->attributes);
 
-		$this->call('GET', 'avalaibleMethods/1');
+		$this->call('GET', 'availableMethods/1');
 
-		$this->assertViewHas('avalaibleMethod');
+		$this->assertViewHas('availableMethod');
 	}
 
 	public function testEdit()
@@ -79,9 +79,9 @@ class AvalaiblemethodsTest extends TestCase {
 				   ->once()
 				   ->andReturn($this->collection);
 
-		$this->call('GET', 'avalaibleMethods/1/edit');
+		$this->call('GET', 'availableMethods/1/edit');
 
-		$this->assertViewHas('avalaibleMethod');
+		$this->assertViewHas('availableMethod');
 	}
 
 	public function testUpdate()
@@ -91,18 +91,18 @@ class AvalaiblemethodsTest extends TestCase {
 				   ->andReturn(m::mock(['update' => true]));
 
 		$this->validate(true);
-		$this->call('PATCH', 'avalaibleMethods/1');
+		$this->call('PATCH', 'availableMethods/1');
 
-		$this->assertRedirectedTo('avalaibleMethods/1');
+		$this->assertRedirectedTo('availableMethods/1');
 	}
 
 	public function testUpdateFails()
 	{
 		$this->mock->shouldReceive('find')->with(1)->andReturn(m::mock(['update' => true]));
 		$this->validate(false);
-		$this->call('PATCH', 'avalaibleMethods/1');
+		$this->call('PATCH', 'availableMethods/1');
 
-		$this->assertRedirectedTo('avalaibleMethods/1/edit');
+		$this->assertRedirectedTo('availableMethods/1/edit');
 		$this->assertSessionHasErrors();
 		$this->assertSessionHas('message');
 	}
@@ -111,7 +111,7 @@ class AvalaiblemethodsTest extends TestCase {
 	{
 		$this->mock->shouldReceive('find')->with(1)->andReturn(m::mock(['delete' => true]));
 
-		$this->call('DELETE', 'avalaibleMethods/1');
+		$this->call('DELETE', 'availableMethods/1');
 	}
 
 	protected function validate($bool)

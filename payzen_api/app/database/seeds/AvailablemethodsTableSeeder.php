@@ -1,18 +1,18 @@
 <?php
 
-class AvalaiblemethodsTableSeeder extends Seeder {
+class AvailablemethodsTableSeeder extends Seeder {
 
 	public function run()
 	{
 		// Uncomment the below to wipe the table clean before populating
-		// DB::table('avalaiblemethods')->truncate();
+		// DB::table('availablemethods')->truncate();
 
-		$avalaiblemethods = array(
+		$availablemethods = array(
 
 		);
 
 		// Uncomment the below to run the seeder
-		// DB::table('avalaiblemethods')->insert($avalaiblemethods);
+		// DB::table('availablemethods')->insert($availablemethods);
 	}
 
 }

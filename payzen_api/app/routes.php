@@ -10,9 +10,9 @@
 | and give it the Closure to execute when that URI is requested.
 |
 */
-Route::get( '/', function () {
-	return View::make( 'hello' );
-} );
+Route::get('/', function () {
+    return View::make('hello');
+});
 
 /*
   root 'doc#index'
@@ -22,13 +22,13 @@ Route::get( '/', function () {
   mount BaseApi => '/'
   */
 
-Route::get( 'test', function () {
-	return "coucou!";
-} );
+Route::controller('redirect', 'RedirectController');
 
-Route::post( "pos/{shopId}/charges", [
-		'before' => 'secure|identify_shop'
-], "ChargesController@postChargeForPos" );
+Route::post("pos/{urlShopId}/charges", [
+    'as' => 'postChargeForPos',
+    'before' => 'secure|identify_shop',
+    'uses' => "ChargesController@postChargeForPos"
+]);
 
 /*
  * 	Verb		Path					Action		Route name
@@ -40,9 +40,9 @@ Route::post( "pos/{shopId}/charges", [
 	PUT/PATCH 	/charge/{charge} 		update 		charge.update
 	DELETE 		/charge/{charge} 		destroy 	charge.destroy
  */
-Route::resource( 'charges', 'ChargesController' );
+Route::resource('charges', 'ChargesController');
 
-Route::resource('avalaiblemethods', 'AvalaiblemethodsController');
+Route::resource('availablemethods', 'AvailablemethodsController');
 
 Route::resource('contexts', 'ContextsController');
 
