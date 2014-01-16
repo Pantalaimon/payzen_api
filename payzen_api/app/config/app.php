@@ -25,7 +25,7 @@ return array(
 	|
 	*/
 
-	'url' => 'http://localhost:50000/payzen_api',
+	'url' => 'https://localhost/payzen_api',
 
 	/*
 	|--------------------------------------------------------------------------
