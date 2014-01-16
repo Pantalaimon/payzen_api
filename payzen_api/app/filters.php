@@ -10,16 +10,12 @@
 | application. Here you may also register your custom route filters.
 |
 */
-
-App::before(function($request)
-{
-	//
+App::before(function ($request) {
+    //
 });
 
-
-App::after(function($request, $response)
-{
-	//
+App::after(function ($request, $response) {
+    //
 });
 
 /*
@@ -33,15 +29,31 @@ App::after(function($request, $response)
 |
 */
 
-Route::filter('auth', function()
-{
-	if (Auth::guest()) return Redirect::guest('login');
+Route::filter('auth', function () {
+    if (Auth::guest())
+        return Redirect::guest('login');
 });
 
+Route::filter('auth.basic', function () {
+    return Auth::basic();
+});
 
-Route::filter('auth.basic', function()
-{
-	return Auth::basic();
+// extract shop_id and shop_key from HTTP authentication
+Route::filter('identify_shop', function () {
+    $username = Request::instance()->getUser();
+    if (preg_match("#^(\d{8})_(\d{16})$#", $username, $matches)) {
+        Request::instance()->attributes->set(\PayzenApi\Constants::SHOP_ID, $matches[1]);
+        Request::instance()->attributes->set(\PayzenApi\Constants::SHOP_KEY, $matches[2]);
+    } else {
+        App::abort(403, "Need shop id and key");
+    }
+});
+
+// make sure we are over https
+Route::filter('secure', function () {
+    if (! Request::instance()->isSecure()) {
+        App::abort(403, "Only available in HTTPS");
+    }
 });
 
 /*
@@ -55,9 +67,9 @@ Route::filter('auth.basic', function()
 |
 */
 
-Route::filter('guest', function()
-{
-	if (Auth::check()) return Redirect::to('/');
+Route::filter('guest', function () {
+    if (Auth::check())
+        return Redirect::to('/');
 });
 
 /*
@@ -71,10 +83,8 @@ Route::filter('guest', function()
 |
 */
 
-Route::filter('csrf', function()
-{
-	if (Session::token() != Input::get('_token'))
-	{
-		throw new Illuminate\Session\TokenMismatchException;
-	}
+Route::filter('csrf', function () {
+    if (Session::token() != Input::get('_token')) {
+        throw new Illuminate\Session\TokenMismatchException();
+    }
 });
