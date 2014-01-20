@@ -1,120 +1,113 @@
-##Payzen API prototype using PHP/Laravel
+##Prototype d'API pour Payzen en PHP/Laravel
 
 ###Requirements :
-PHP 5.4+ (laravel 5.3, payzen code 5.4)
+PHP 5.4+ (laravel 5.3, code appli 5.4)
 
-Mandatory extensions : mcrypt (laravel), soap (TODO)
+Extensions PHP obligatoires : mcrypt (laravel), soap (pour les WS, pas encore implémenté)
 
-Recommended extensions : memcached (TODO for generating trans_id)
+Extensions PHP recommandées : memcached (pour une meilleure génération du trans_id, pas encore implémenté)
 
-Also see composer.json
+Voir composer.json pour les librairies php
 
 
 ---
 
-###What's nice...
-####...about PHP :
-* very popular => huge community & support, installed by default on most web providers, extensions, open-source projects (prestashop, magento...)
-* our clients use it, our support team too (and we already have code for form generation, WS...)
-* excellent documentation (in french too)
-* powerful native features for templating, escaping, input validation, regexes, string/json/array manipulation...
-* evolves quite quickly (since 2009 : removed magic quotes, added traits, closures, chained calls, namespaces, yield...)
-* fast, low memory consumption, no compilation, no server restart, copy your code to apache and you're done
+###Ce qui est bien...
+####...avec PHP :
+* Extrêmement populaire => grosse communauté, beaucoup de bibliothèques, projets open source (prestashop, magento...), sources de support etc.
+* Fourni par défaut chez la quasi-totalité des hébergeurs
+* Utilisé par nos clients et notre équipe support (possibilité de reprendre le code pour le formulaire de paiement et les WS)
+* Excellente documentation, y compris en français
+* Conçu pour le web avec de puissantes fonctionnalités natives : templates, validation/échappement des paramètres, urls et html, traitement du texte...
+* Évolution rapide (depuis 2009 : ajout des traits, fermetures, appels chaînés, espaces de nom, mot clé "yield"...)
+* Rapide, consomme très peu de mémoire, pas de compilation ni de redémarrage du serveur
 
-####...about Laravel :
-* based on symfony, one of the main "enterprisey" php frameworks
-* built with composer, the main php dependency manager
-* good documentation (whole phpdoc + good presentation of main features)
-* active community, with lots of pluggable bundles (ide helper generator, scaffolding generator, curl lib...)
-* php 5.3+ => uses recent powerful PHP features (late static binding, closures, etc.) for much lighter code
-* rails-like (light & powerful syntax based on conventions). App and code structure looks very much like Greg's grape
-* ReSTful to the bone :
+####...avec Laravel :
+* Dérivé de symphony, assemblé avec composer, outils de référence en PHP
+* Bonne documentation (phpdoc + guide des principales fonctionnalités + code et configuration bien commentés...)
+* Communauté active, pas mal de plugins
+* L'outil en ligne de commande pour la génération de code, la migration bdd...
+* Très inspiré de rails : conventions > configuration, syntaxe puissante, système de migrations bdd, conçu pour ReST :
 
 <pre>
 Route::resource('charges', 'ChargesController');
-/* Maps in a single line :
-  Verb		  Path					          Action		Internal route name   note
-	GET 		  /charge 				        index 		charge.index          list all charges
-	GET 		  /charge/create 			    create 		charge.create         creation form
-	POST 		  /charge 				        store 		charge.store          creation action
-	GET 		  /charge/{charge} 		    show 		  charge.show           details one item
-	GET 		  /charge/{charge}/edit   edit 		  charge.edit           update/delete form
-	PUT/PATCH /charge/{charge} 		    update 		charge.update         update action
-	DELETE 		/charge/{charge} 		    destroy 	charge.destroy        delete action
+/* Déclare en une ligne :
+Verbe		Chemin					Action		Nom de route		note
+GET			/charge					index		charge.index		list all charges
+GET			/charge/create			create		charge.create		creation form
+POST		/charge					store		charge.store		creation action
+GET			/charge/{charge}		show		charge.show			details one item
+GET			/charge/{charge}/edit	edit		charge.edit			update/delete form
+PUT/PATCH	/charge/{charge}		update		charge.update		update action
+DELETE 		/charge/{charge}		destroy		charge.destroy		delete action
 */
 </pre>
 
 ---
 
-###What you may or may not like...
-####...about PHP :
-* syntax (ligther than java, more familiar than ruby, but cumbersome OOP syntax) : $object->method( Namespace\Class::staticMethod( ['key'=>'value'] );
-* dynamic typing (although less frightening than javascript)
-* liberty : lots of frameworks, 2 debuggers, 4 ways to define a string, hundreds of way to do things (most can go wrong)
-* eclipse PHP tools are ok, but not great (lacks refactoring, limited auto-completion) but some other IDEs perform better (aptana which is eclipse-based, phpStorm...)
+###Ce qu'on aime ou pas...
+####...avec PHP :
+* La syntaxe (ressemble au C avec des "$" partout et des opérateurs de POO un peu lourds)
+* Types et noms de variable dynamiques, chargement de classes et méthodes "magiques" => code très léger mais auto-complétion et refactoring limités sous eclipse (à voir avec des IDEs plus spécialisés).
+* La liberté : beaucoup de frameworks concurrents, de conventions de codage, 2 débuggeurs...
 
-####...about Laravel :
-* may become difficult to maintan if developers don't agree on conventions
-* inversion of controller
+####...avec Laravel :
+* Malgré les conventions, beaucoup de liberté dans l'organisation du code
+* Les routes, filtres, évènements et l'inversion de contrôle qui permettent d'éclater le code et de changer le comportement par simple configuration
+* Framework généraliste, il existe peut-être mieux pour créer une API json
 
 ---
 
-###What is bad...
-####... about PHP :
-* highly depends on local configuration (huge constraints for "universal" deployment)
-* inconsistencies in basic API (function names, parameters order...)
-* dangerous features for unexperienced developers, especially in older versions ("magic quotes", "extract" function...)
-* still no native Unicode support (encode your source in UTF-8 and you'll be find though)
+###Ce qui est dommage...
+####...avec PHP :
+* Dépend beaucoup de la configuration locale (version, extensions, etc.)
+* Inconsistances historiques dans certaines API de base
+* Support unicode incomplet
 
-####...about Laravel :
-* 5.3+ => cannot be installed everywhere
+####...avec Laravel :
+* PHP 5.3 + extensions => pas garanti qu'il puisse être installé partout
+* Moins bon pour certains cas aux limites (validation des sous-tableaux json par exemple)
+* Url "http://localhost/monAppli**/public/**" par défaut
 
 ---
 
 ###Greg's list :
-* parsing json : Input::isJson() / Input::json()
-* generating json : Input::wantsJson() / $entity->toJson()
+* parsing json :
+<pre>
+$params = Input::isJson() ? Input::json() : Input::all();
+</pre>
+
+* generation json :
+
+<pre>return Input::wantsJson()
+	? $entity->toJson()
+	: View::make('entity.show', ['entity'=>$entity]);
+</pre>
+
 * persistence :
 
 <pre>
 $charge = Charge::create( ['attribute' => 'value'...] );
 $charge->contexts()->save(new Context( ['attribute' => 'value'...] ));
 </pre>
-* validation :
+* validation : Laravel fournit un "Validator" sympa mais limité, PHP fournit des filtres natifs (notamment pour les emails, ip, url...).
 
 <pre>
-//FIXME Laravel validator cannot validate sub-arrays (available_methods, etc.)
 $validation = Validator::make($params, [
   "amount" => "required|numeric|min:0.00001",
-  "currency" => "required|alphanum|size:3"]
-);
+  "currency" => "required|alphanum|size:3"
+]);
 if($validation->fails()) {
   App::abort(400, $validation->errors());
 }
-
-// native PHP alternative
-$amount = filter_var( $params['amount'], FILTER_VALIDATE_INT, $options);
-if( $amount === false ) {
-  // bad amount !
-}
 </pre>
 
-* Client soap : extension PHP Soap à installer/configurer (de base dans xampp). Manu connaît mieux que moi (pour l'instant...)
+* Client soap : extension PHP Soap (installée de base dans xampp).
 
 <pre>
-// in $option we can map xml elements to custom PHP classes (not tested)
 $client = new SoapClient( $wsdlURL, $options );
 $object = $client->__soapCall( 'getInfo', $array );
 </pre>
 
-* Client rest : extension PHP Curl (avec un bundle Laravel pour simplifier la syntaxe).
-
-<pre>
-$curl = new Curl();
-$curl->ssl( Config::get( "payzenapi.ssl_verifypeer" ) );
-$html = $curl->simple_post( Config::get( "payzenapi.form_url" ), $data );
-$headers = $curl->response_headers;
-$cookies = $curl->response_cookies; // Home-made !
-</pre>
-
-* Gestion des exceptions : similaire à java (try, catch, throw new CustomException...). Laravel catche & loggue toutes les exceptions par défaut
+* Client rest : extension PHP Curl (avec un plugin Laravel pour alléger la syntaxe).
+* Gestion des exceptions : similaire à java. Laravel fournit un système de ExceptionHandler pour intercepter et traiter tout type d'exception (celui par défaut loggue tout avec une stacktrace).
