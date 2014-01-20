@@ -10,6 +10,8 @@ class AvailableMethod extends Eloquent {
 
     protected $guarded = array();
 
+    protected $visible = ['method'];
+
     public static $rules = array(
         'charge_id' => 'required',
         'method' => 'required'

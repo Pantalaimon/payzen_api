@@ -12,7 +12,12 @@
  */
 class Message extends Eloquent {
 
-    protected $guarded = array();
+    protected $visible = [
+        'title',
+        'description'
+    ];
+
+    protected $guarded = [];
 
     public static $rules = array(
         'charge_id' => 'required',

@@ -22,8 +22,15 @@ Route::get('/', function () {
   mount BaseApi => '/'
   */
 
-Route::controller('redirect', 'RedirectController');
+// RedirectController
+Route::get('redirect/{chargeId}', [
+    'as' => 'redirectClient',
+    'before' => 'secure',
+    'uses' => "RedirectController@go"
+])->where('chargeId', '\d+');
+Route::controller('redirect', 'RedirectController'); // auto-map methods "getX", "postX", "putX" and "deleteX"
 
+// Charge creation with shop id in url
 Route::post("pos/{urlShopId}/charges", [
     'as' => 'postChargeForPos',
     'before' => 'secure|identify_shop',

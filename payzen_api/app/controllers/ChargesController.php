@@ -89,7 +89,8 @@ class ChargesController extends BaseController {
     public function show($id) {
         $charge = $this->charge->findOrFail($id);
 
-        return View::make('charges.show', compact('charge'));
+        return $this->updateAndDisplayCharge($charge, true);//FIXME use Input::isJson()
+        // return View::make('charges.show', compact('charge'));
     }
 
     /**
@@ -194,6 +195,7 @@ class ChargesController extends BaseController {
         }
 
         // save Charge
+        // TODO mass assignment ?
         $charge = new Charge();
         $charge->amount = $params['amount'];
         $charge->currency = $currency->alpha3;
@@ -203,10 +205,11 @@ class ChargesController extends BaseController {
         $charge->save();
 
         // attach context
+        // TODO mass assignment ?
         $context = new Context();
         $context->trans_date = $api->trans_date;
         $context->trans_id = $api->trans_id;
-        $context->trans_time = $api->trans_timestamp;
+        $context->trans_time = $api->trans_timestamp;//TODO useless ?
         $context->cache_id = $info->cache_id;
         $context->locale = $info->locale;
         $context->status = Context::STATUS_CREATED;
@@ -222,10 +225,68 @@ class ChargesController extends BaseController {
         $charge->availableMethods()->delete();
         $charge->availableMethods()->saveMany($availableMethods);
 
-        return $this->displayCharge($charge, Input::wantsJson());
+        return $this->updateAndDisplayCharge($charge, Input::wantsJson());
     }
 
-    private function displayCharge(\Charge $charge, $json = true) {
-        return $charge->toJson(JSON_PRETTY_PRINT);//TODO print relations
+    private function updateAndDisplayCharge(\Charge $charge, $json = true) {
+        $charge->load('availableMethods', 'messages', 'usedMethods');
+        $links = [
+            $this->buildLink(URL::route('charges.show', $charge->id, true), 'self', 'get')
+        ];
+
+        // Update from last context
+        $lastContext = $charge->contexts()
+            ->getResults()
+            ->last();
+        switch ($lastContext->status) {
+            case \Context::STATUS_CREATED:
+                $links[] = $this->buildLink(URL::route('charges.update', $charge->id, true), 'update', 'put');
+                $links[] = $this->buildLink(URL::route('redirectClient', $charge->id), 'redirect', 'get');
+                $message = $charge->messages()->create([
+                    'title' => 'PAYMENT_INSTRUMENT_REQUIRED',
+                    'description' => "Transaction is incomplete. No payment instrument was chosen."
+                ]);
+                break;
+
+            case \Context::STATUS_SUCCESS:
+                $charge->status = \Charge::STATUS_COMPLETE;
+                break;
+
+            case \Context::STATUS_FAILURE:
+                $charge->status = \Charge::STATUS_INCOMPLETE;
+                $message = $charge->messages()->create([
+                    'title' => 'FAILURE',
+                    'description' => "Payment has been refused"
+                ]);
+
+            case \Context::STATUS_CANCELLED:
+                $charge->status = \Charge::STATUS_INCOMPLETE;
+                $message = $charge->messages()->create([
+                    'title' => 'CANCELLED',
+                    'description' => "Payment has been abandonned by the user"
+                ]);
+
+            case \Context::STATUS_LOCKED:
+                $charge->status = \Charge::STATUS_INCOMPLETE;
+                $message = $charge->messages()->create([
+                    'title' => 'PAYMENT_IN_PROGRESS',
+                    'description' => "User is using the payment pages. Hold your breath and stand still..."
+                ]);
+        }
+
+        $charge->save();
+
+        // format and return
+        $data = array_merge($charge->toArray(), compact('links', 'messages'));
+
+        if ($json) {
+            return json_encode($data, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+        } else {
+            return View::make('charges.show', compact('charge'));
+        }
+    }
+
+    private function buildLink($href, $rel, $method) {
+        return compact('href', 'rel', 'method'); // OMG I love the compact function !
     }
 }

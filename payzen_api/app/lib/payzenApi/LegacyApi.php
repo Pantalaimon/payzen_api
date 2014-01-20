@@ -79,11 +79,12 @@ class LegacyApi {
         return $temp;
     }
 
-    function getRedirectUrl(Context $context) {
+    public static function getRedirectUrl(\Context $context) {
         $url = \Config::get("payzenapi.form_url");
         $url .= "exec.updateLocale.a";
         $url .= "?cacheId=" . $context->cache_id;
         $url .= "&newLocale=" . $context->locale;
+        return $url;
     }
 
     /**
@@ -128,7 +129,7 @@ class LegacyApi {
         $raw_sign = join("+", $data) . "+" . $this->shop_key;
         $data["signature"] = sha1($raw_sign);
 
-        Log::debug("Prepared data for payment page : " . print_r($data, true));
+        //Log::debug("Prepared data for payment page : " . print_r($data, true));
 
         return $data;
     }
@@ -155,14 +156,14 @@ class LegacyApi {
      * @return PayzenApi\PageInfo
      */
     function parsePage($html, $cookies) {
-        $info = new PageInfo();
-        $info->card_types = [];
-        $info->state = PageInfo::STATE_UNKNOWN;
+        $pageInfo = new PageInfo();
+        $pageInfo->card_types = [];
+        $pageInfo->state = PageInfo::STATE_UNKNOWN;
 
         // get cacheId from cookies
         foreach ($cookies as $cookie) {
             if (preg_match("#^\d+$#", $cookie['name'])) {
-                $info->cache_id = $cookie['name'];
+                $pageInfo->cache_id = $cookie['name'];
                 break;
             }
         }
@@ -171,35 +172,35 @@ class LegacyApi {
         $form_action = $this->extractData('#action="exec\.([A-Za-z_]+)\.a"#', $html);
         switch ($form_action) {
             case "card_input":
-                $info->state = PageInfo::STATE_ENTRY;
+                $pageInfo->state = PageInfo::STATE_ENTRY;
                 break;
             case "paymentChoice":
-                $info->state = PageInfo::STATE_CHOICE;
+                $pageInfo->state = PageInfo::STATE_CHOICE;
                 break;
             case "success":
-                $info->state = PageInfo::STATE_SUCCESS;
+                $pageInfo->state = PageInfo::STATE_SUCCESS;
                 break;
             case "refused":
             case "referral":
-                $info->state = PageInfo::STATE_FAILURE;
+                $pageInfo->state = PageInfo::STATE_FAILURE;
                 break;
 
             default:
                 break;
         }
-        if ($info->state == PageInfo::STATE_CHOICE) {
+        if ($pageInfo->state == PageInfo::STATE_CHOICE) {
             preg_match_all('#label for="([^"]+)" class="choiceLabel"#', $html, $matches, PREG_PATTERN_ORDER);
-            $info->card_types = $matches[1];
+            $pageInfo->card_types = $matches[1];
         }
 
-        if (! $info->cache_id) {
-            $info->state = PageInfo::STATE_ERROR;
+        if (! $pageInfo->cache_id) {
+            $pageInfo->state = PageInfo::STATE_ERROR;
         }
 
         $flag = $this->extractData('#img src="\/static\/commons\/flags\/(..)\.#', $html);
-        $info->locale = $this->locale_icons[$flag];//TODO db ?
+        $pageInfo->locale = $this->locale_icons[$flag];//TODO db ?
 
-        return $info;
+        return $pageInfo;
     }
 
     private function extractData($regex, $html) {
