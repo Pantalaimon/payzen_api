@@ -1,6 +1,6 @@
 <?php
 use PayzenApi\Constants;
-use PayzenApi\LegacyApi;
+use PayzenApi\FormApi;
 use PayzenApi\PageInfo;
 
 class ChargesController extends BaseController {
@@ -28,7 +28,7 @@ class ChargesController extends BaseController {
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new charge.
      *
      * @return Response
      */
@@ -37,7 +37,7 @@ class ChargesController extends BaseController {
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Wrapper around the postChargeForPos API command from the create form
      *
      * @return Response
      */
@@ -89,8 +89,8 @@ class ChargesController extends BaseController {
     public function show($id) {
         $charge = $this->charge->findOrFail($id);
 
-        return $this->updateAndDisplayCharge($charge, true);//FIXME use Input::isJson()
-        // return View::make('charges.show', compact('charge'));
+        return $this->displayCharge($charge, true); // FIXME use Input::isJson()
+                                                              // return View::make('charges.show', compact('charge'));
     }
 
     /**
@@ -116,6 +116,7 @@ class ChargesController extends BaseController {
      * @return Response
      */
     public function update($id) {
+        // TODO auto-generated
         $input = array_except(Input::all(), '_method');
         $validation = Validator::make($input, Charge::$rules);
 
@@ -131,27 +132,34 @@ class ChargesController extends BaseController {
             ->with('message', 'There were validation errors.');
     }
 
+    // /**
+    // * Remove the specified resource from storage.
+    // *
+    // * @param int $id
+    // * @return Response
+    // */
+    // public function destroy($id) {
+    // //TODO auto-generated
+    // $this->charge->find($id)->delete();
+
+    // return Redirect::route('charges.index');
+    // }
+
     /**
-     * Remove the specified resource from storage.
+     * Creates a charge and initialize a payment context as per API proto-spec
      *
-     * @param int $id
-     * @return Response
+     * @param int $urlShopId
+     * @throws \Exception
+     * @return void Ambigous \Illuminate\View\View>
      */
-    public function destroy($id) {
-        $this->charge->find($id)->delete();
-
-        return Redirect::route('charges.index');
-    }
-
     function postChargeForPos($urlShopId) {
-        // return "input:" . Input::all() . " json" . Input::json();
         $request = Request::instance();
 
         // Filled from "identify_shop" filter
         $shopId = $request->attributes->get(\PayzenApi\Constants::SHOP_ID);
         $shopKey = $request->attributes->get(\PayzenApi\Constants::SHOP_KEY);
 
-        // Check consistency, just for fun
+        // Check consistency, just for fun FIXME avoid duplicate parameters in API
         if ($shopId != $urlShopId) {
             return App::abort(400, "Incoherent shop id !");
         }
@@ -171,6 +179,7 @@ class ChargesController extends BaseController {
         // look for currency by alpha or num code
         $currency_code = strtolower(array_get($params, "currency", ""));
         $currency = \Currency::where('alpha3', '=', $currency_code)->orWhere('numeric', '=', $currency_code)->first();
+        ;
         if (! $currency) {
             throw new \Exception("Unsupported currency : " . $currency_code); // TODO better exception
         }
@@ -179,57 +188,55 @@ class ChargesController extends BaseController {
             return App::abort(400, $validation->errors());
         }
 
-        $available = array_get($params, "available_methods", []);
-        $selected = array_get($params, "available_instruments", []);
-
-        $params["url_return"] = URL::action("RedirectController@getReturn");
         // Call and parse
-        $api = new LegacyApi();
-        $api->init($urlShopId, $shopKey);
-        $api->postForm($api->generateFormData($params, $currency), $html, $headers, $cookies);
-        $info = $api->parsePage($html, $cookies);
+        $api = new PayzenApi\FormApi($urlShopId, $shopKey);
+        $info = $api->createPaymentContext($params, $currency);
 
         // Check ok
         if ($info->state == PageInfo::STATE_ERROR) {
             return App::abort(500, "Error when calling payzen");
         }
 
-        // save Charge
-        // TODO mass assignment ?
-        $charge = new Charge();
-        $charge->amount = $params['amount'];
-        $charge->currency = $currency->alpha3;
-        $charge->shop_id = $shopId;
-        $charge->shop_key = $shopKey;
-        $charge->status = Charge::STATUS_CREATED;
-        $charge->save();
+        // Prepare entities to be saved
+        $charge = new Charge([
+            'amount' => $params['amount'],
+            'currency' => $currency->alpha3,
+            'shop_id' => $shopId,
+            'shop_key' => $shopKey,
+            'status' => Charge::STATUS_CREATED
+        ]);
 
-        // attach context
-        // TODO mass assignment ?
-        $context = new Context();
-        $context->trans_date = $api->trans_date;
-        $context->trans_id = $api->trans_id;
-        $context->trans_time = $api->trans_timestamp;//TODO useless ?
-        $context->cache_id = $info->cache_id;
-        $context->locale = $info->locale;
-        $context->status = Context::STATUS_CREATED;
-        $context = $charge->contexts()->save($context);
+        $context = new Context([
+            'trans_date' => $api->trans_date,
+            'trans_id' => $api->trans_id,
+            'trans_time' => $api->trans_time, // TODO useless ?
+            'cache_id' => $info->cache_id,
+            'locale' => $info->locale,
+            'status' => Context::STATUS_CREATED
+        ]);
+        $charge->updateFromContext($context);
 
-        // create/refresh persisted available methods
         $availableMethods = [];
         foreach ($info->card_types as $method) {
-            $availableMethod = new AvailableMethod();
-            $availableMethod->setAttribute('method', $method);
-            $availableMethods[] = $availableMethod;
+            $availableMethods[] = new AvailableMethod([
+                'method' => $method
+            ]);
         }
+
+        // Persist all
+        $charge->save();
+        $context = $charge->contexts()->save($context);
+//         Log::debug("created context : " . var_export($context, true));
+
+        // create/refresh persisted available methods
         $charge->availableMethods()->delete();
         $charge->availableMethods()->saveMany($availableMethods);
 
-        return $this->updateAndDisplayCharge($charge, Input::wantsJson());
+        return $this->displayCharge($charge, Input::wantsJson());
     }
 
-    private function updateAndDisplayCharge(\Charge $charge, $json = true) {
-        $charge->load('availableMethods', 'messages', 'usedMethods');
+    private function displayCharge(\Charge $charge, $json = true) {
+        $charge->load('availableMethods', 'contexts');
         $links = [
             $this->buildLink(URL::route('charges.show', $charge->id, true), 'self', 'get')
         ];
@@ -242,45 +249,30 @@ class ChargesController extends BaseController {
             case \Context::STATUS_CREATED:
                 $links[] = $this->buildLink(URL::route('charges.update', $charge->id, true), 'update', 'put');
                 $links[] = $this->buildLink(URL::route('redirectClient', $charge->id), 'redirect', 'get');
-                $message = $charge->messages()->create([
-                    'title' => 'PAYMENT_INSTRUMENT_REQUIRED',
-                    'description' => "Transaction is incomplete. No payment instrument was chosen."
-                ]);
+                $messages = $this->buildMessages('PAYMENT_INSTRUMENT_REQUIRED', "Transaction is incomplete. No payment instrument was chosen.");
                 break;
 
             case \Context::STATUS_SUCCESS:
-                $charge->status = \Charge::STATUS_COMPLETE;
                 break;
 
             case \Context::STATUS_FAILURE:
-                $charge->status = \Charge::STATUS_INCOMPLETE;
-                $message = $charge->messages()->create([
-                    'title' => 'FAILURE',
-                    'description' => "Payment has been refused"
-                ]);
+                $messages = $this->buildMessages('FAILURE', "Payment has been refused");
+                break;
 
             case \Context::STATUS_CANCELLED:
-                $charge->status = \Charge::STATUS_INCOMPLETE;
-                $message = $charge->messages()->create([
-                    'title' => 'CANCELLED',
-                    'description' => "Payment has been abandonned by the user"
-                ]);
+                $messages = $this->buildMessages('CANCELLED', "Payment has been abandonned by the user");
+                break;
 
             case \Context::STATUS_LOCKED:
-                $charge->status = \Charge::STATUS_INCOMPLETE;
-                $message = $charge->messages()->create([
-                    'title' => 'PAYMENT_IN_PROGRESS',
-                    'description' => "User is using the payment pages. Hold your breath and stand still..."
-                ]);
+                $messages = $this->buildMessages('PAYMENT_IN_PROGRESS', "User is using the payment pages. Hold your breath and stand still...");
+                break;
         }
-
-        $charge->save();
 
         // format and return
         $data = array_merge($charge->toArray(), compact('links', 'messages'));
 
         if ($json) {
-            return json_encode($data, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES);
+            return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         } else {
             return View::make('charges.show', compact('charge'));
         }
@@ -288,5 +280,11 @@ class ChargesController extends BaseController {
 
     private function buildLink($href, $rel, $method) {
         return compact('href', 'rel', 'method'); // OMG I love the compact function !
+    }
+
+    private function buildMessages($title, $description) {
+        return [
+            compact('title', 'description')
+        ];
     }
 }

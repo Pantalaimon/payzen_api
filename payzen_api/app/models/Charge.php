@@ -21,9 +21,11 @@ class Charge extends Eloquent {
         'messages',
         'amount',
         'currency',
-        'availableMethods',
-        'messages',
-        'usedMethods' /*TODO ,'transactions'*/];
+        'availableMethods' /*TODO ,'transactions'*/];
+
+    protected $hidden = [
+        'shop_key'
+    ];
 
     const STATUS_CREATED = 'created';
 
@@ -33,8 +35,12 @@ class Charge extends Eloquent {
 
     const STATUS_CANCELLED = 'cancelled';
 
-    protected $guarded = [
-        '*'
+    protected $fillable = [
+        'amount',
+        'currency',
+        'shop_id',
+        'shop_key',
+        'status'
     ];
 
     /**
@@ -54,12 +60,24 @@ class Charge extends Eloquent {
     public function availableMethods() {
         return $this->hasMany('AvailableMethod');
     }
+    // TODO transactions
 
-    public function usedMethods() {
-        return $this->hasMany('UsedMethod');
-    }
-
-    public function messages() {
-        return $this->hasMany('Message');
+    public function updateFromContext(Context $context) {
+        switch ($context->status) {
+            case Context::STATUS_CREATED:
+                break;
+            case Context::STATUS_SUCCESS:
+                $this->status = \Charge::STATUS_COMPLETE;
+                break;
+            case Context::STATUS_FAILURE:
+                $this->status = \Charge::STATUS_INCOMPLETE;
+                break;
+            case Context::STATUS_CANCELLED:
+                $this->status = \Charge::STATUS_INCOMPLETE;
+                break;
+            case Context::STATUS_LOCKED:
+                $this->status = \Charge::STATUS_INCOMPLETE;
+                break;
+        }
     }
 }

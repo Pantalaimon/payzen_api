@@ -8,9 +8,13 @@ class AvailableMethod extends Eloquent {
 
     protected $table = 'availablemethods';
 
-    protected $guarded = array();
+    protected $fillable = [
+        'method'
+    ];
 
-    protected $visible = ['method'];
+    protected $visible = [
+        'method'
+    ];
 
     public static $rules = array(
         'charge_id' => 'required',

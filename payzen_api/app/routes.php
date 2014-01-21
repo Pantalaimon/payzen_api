@@ -47,14 +47,37 @@ Route::post("pos/{urlShopId}/charges", [
 	PUT/PATCH 	/charge/{charge} 		update 		charge.update
 	DELETE 		/charge/{charge} 		destroy 	charge.destroy
  */
-Route::resource('charges', 'ChargesController');
+Route::resource('charges', 'ChargesController', [
+    'except' => [
+        'delete'
+    ]
+]);
 
-Route::resource('availablemethods', 'AvailablemethodsController');
+Route::resource('availablemethods', 'AvailablemethodsController', [
+    'except' => [
+        'update',
+        'delete'
+    ]
+]);
 
-Route::resource('contexts', 'ContextsController');
+Route::resource('contexts', 'ContextsController', [
+    'except' => [
+        'update',
+        'delete'
+    ]
+]);
 
-Route::resource('messages', 'MessagesController');
 
-Route::resource('usedmethods', 'UsedmethodsController');
+Route::resource('currencies', 'CurrenciesController', [
+    'except' => [
+        'update',
+        'delete'
+    ]
+]);
 
-Route::resource('currencies', 'CurrenciesController');
+Route::resource('transactions', 'TransactionsController', [
+    'except' => [
+        'update',
+        'delete'
+    ]
+]);

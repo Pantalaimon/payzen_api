@@ -15,9 +15,8 @@ class DatabaseSeeder extends Seeder {
 		$this->call('ChargesTableSeeder');
 		$this->call('AvailablemethodsTableSeeder');
 		$this->call('ContextsTableSeeder');
-		$this->call('MessagesTableSeeder');
-		$this->call('UsedmethodsTableSeeder');
 		$this->call('CurrenciesTableSeeder');
+		$this->call('TransactionsTableSeeder');
 	}
 
 }

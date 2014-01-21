@@ -17,11 +17,22 @@ class RedirectController extends BaseController {
         $lastContext = $charge->contexts()
             ->getResults()
             ->last();
-        if ($lastContext->status == Context::STATUS_CREATED) {
-            $lastContext->status = Context::STATUS_LOCKED;
+
+        // Check if local data is up to date
+        $lastKnownStatus = $lastContext->status;
+        $freshInfo = PayzenApi\FormApi::reloadForm($lastContext);
+        $lastContext->updateFromPageInfo($freshInfo);
+        if ($lastContext->status != $lastKnownStatus) {
             $lastContext->save();
         }
-        return Redirect::away(PayzenApi\LegacyApi::getRedirectUrl($lastContext));
+
+        if ($lastContext->status != Context::STATUS_CREATED && $lastContext != Context::STATUS_LOCKED) {
+            // TODO build a new one
+            Log::debug("Last context status : ".$lastContext->status);
+            App::abort(500, "Payment context expired, building a new one is not implemented yet");
+        }
+
+        return Redirect::away(PayzenApi\FormApi::getRedirectUrl($lastContext));
     }
 
     /**
@@ -84,8 +95,8 @@ class RedirectController extends BaseController {
         $result = Input::get("vads_result");
 
         // Update charge
-        //TODO merge code with getInfo
-        //TODO update messages, availableMethods...
+        // TODO merge code with getInfo
+        // TODO update transactions, availableMethods...
         if ($result == '00') {
             $context->status = Context::STATUS_SUCCESS;
             // TODO check remaining amount to decide charge status
@@ -99,7 +110,7 @@ class RedirectController extends BaseController {
         $context->save();
         $charge->save();
 
-        //TODO call merchant website
+        // TODO call merchant website
 
         return $charge;
     }

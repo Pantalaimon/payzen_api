@@ -32,11 +32,22 @@ class Context extends Eloquent {
         "charge_id"
     ];
 
+    protected $fillable = [
+        'trans_date',
+        'trans_id',
+        'trans_time',
+        'cache_id',
+        'locale',
+        'status'
+    ];
+
     public function charge() {
         return $this->belongsTo('Charge', 'charge_id');
     }
 
     public function updateFromPageInfo(PageInfo $pageInfo) {
+        // Log::debug(var_export($this,true));
+        Log::debug("Update context from pageInfo, status : " . var_export($pageInfo->state, true));
         switch ($pageInfo->state) {
             case PageInfo::STATE_CHOICE:
             case PageInfo::STATE_ENTRY:
@@ -51,5 +62,6 @@ class Context extends Eloquent {
             default:
                 $this->status = self::STATUS_CANCELLED;
         }
+        // Log::debug(var_export($this,true));
     }
 }

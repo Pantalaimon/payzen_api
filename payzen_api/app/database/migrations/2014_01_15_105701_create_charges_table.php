@@ -15,6 +15,7 @@ class CreateChargesTable extends Migration {
 			$table->string( 'currency', 3 );
 			$table->string( 'shop_id', 8 );
 			$table->string( 'shop_key', 16 );
+			//TODO Charge::STATUS_XXX
 			$table->enum( 'status', [
 					'incomplete',
 					'complete',
