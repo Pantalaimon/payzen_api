@@ -50,10 +50,11 @@ class ChargesController extends BaseController {
             $shop_id = Input::get("shop_id");
             $shop_key = Input::get("shop_key");
 
-            $json = json_encode(Input::only([
+            $json = json_encode(array_merge(Input::only([
                 'amount',
-                'currency'
-            ]), JSON_PRETTY_PRINT);
+                'currency',
+                'available_methods'
+            ])), JSON_PRETTY_PRINT);
             $url = URL::route('postChargeForPos', [
                 "urlShopId" => $shop_id
             ]);
@@ -171,15 +172,13 @@ class ChargesController extends BaseController {
         $validation = Validator::make($params, [
             "amount" => "required|numeric|min:0.00001",
             "currency" => "required|alphanum|size:3"
-				/* "available_methods" => "",
-				 "available_instruments" => ""
-		*/
-				]);
+        /* "available_methods.method" => "alpha" */
+        ]);
 
         // look for currency by alpha or num code
         $currency_code = strtolower(array_get($params, "currency", ""));
         $currency = \Currency::where('alpha3', '=', $currency_code)->orWhere('numeric', '=', $currency_code)->first();
-        ;
+
         if (! $currency) {
             throw new \Exception("Unsupported currency : " . $currency_code); // TODO better exception
         }
@@ -248,7 +247,7 @@ class ChargesController extends BaseController {
         $charge->transactions()
             ->getResults()
             ->each(function ($transEnt) use(&$transactions, $wsApi) {
-            $transactions[] = (array)$wsApi->getInfoFromTransaction($transEnt);
+            $transactions[] = (array) $wsApi->getInfoFromTransaction($transEnt);
         });
 
         // Update from last context

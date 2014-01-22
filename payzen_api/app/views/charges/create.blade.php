@@ -26,6 +26,15 @@
             {{ Form::text('shop_key') }}
         </li>
 
+
+        <li>
+            {{ Form::label('available_methods[]', 'Available methods:') }}
+            <?php
+            $methods = ['CB','VISA','MASTERCARD'];
+             echo Form::select('available_methods[][method]', array_combine($methods, $methods), null, ['multiple'=>true]);
+            ?><br/>
+        </li>
+
 		<li>
 			{{ Form::submit('Submit', array('class' => 'btn btn-info')) }}
 		</li>

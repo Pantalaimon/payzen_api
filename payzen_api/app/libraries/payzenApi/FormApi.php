@@ -98,13 +98,12 @@ class FormApi {
             "vads_url_return" => URL::action("RedirectController@getReturn")
         ];
 
-        $availables = array_get($params, "available_methods", null);
-        if ($availables) {
-            $cards = array_build($availables, function ($key, $value) {
-                return $value["method"];
-            });
-            $data["vads_payment_cards"] = join(";", $cards);
+        $availables = array_get($params, "available_methods", []);
+        $cards = [];
+        foreach ($availables as $available) {
+            $cards[] = $available["method"];
         }
+        $data["vads_payment_cards"] = join(";", $cards);
 
         ksort($data);
         $raw_sign = join("+", $data) . "+" . $this->shop_key;
