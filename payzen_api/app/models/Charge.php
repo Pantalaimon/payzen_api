@@ -21,7 +21,8 @@ class Charge extends Eloquent {
         'messages',
         'amount',
         'currency',
-        'availableMethods' /*TODO ,'transactions'*/];
+        'availableMethods'
+    ];
 
     protected $hidden = [
         'shop_key'
@@ -60,7 +61,10 @@ class Charge extends Eloquent {
     public function availableMethods() {
         return $this->hasMany('AvailableMethod');
     }
-    // TODO transactions
+
+    public function transactions() {
+        return $this->hasMany('Transaction');
+    }
 
     public function updateFromContext(Context $context) {
         switch ($context->status) {

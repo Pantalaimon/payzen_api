@@ -28,7 +28,7 @@ class RedirectController extends BaseController {
 
         if ($lastContext->status != Context::STATUS_CREATED && $lastContext != Context::STATUS_LOCKED) {
             // TODO build a new one
-            Log::debug("Last context status : ".$lastContext->status);
+            Log::debug("Last context status : " . $lastContext->status);
             App::abort(500, "Payment context expired, building a new one is not implemented yet");
         }
 
@@ -75,8 +75,13 @@ class RedirectController extends BaseController {
         if (! $context) {
             App::abort(404, "Charge not found !");
         }
-        $charge = $context->charge;
 
+        $charge = $context->charge;
+        /**
+         *
+         * @var Charge $charge
+         */
+        // $charge->
         // Signature check
         $signParams = [];
         foreach (Input::all() as $key => $val) {
@@ -102,6 +107,7 @@ class RedirectController extends BaseController {
             // TODO check remaining amount to decide charge status
             $charge->status = Charge::STATUS_COMPLETE;
             $charge->availableMethods()->delete();
+            $charge->transactions()->save(Transaction::buildTransaction($charge, $context));
         } elseif ($result == '17') {
             $context->status = Context::STATUS_CANCELLED;
         } else {

@@ -90,7 +90,7 @@ class ChargesController extends BaseController {
         $charge = $this->charge->findOrFail($id);
 
         return $this->displayCharge($charge, true); // FIXME use Input::isJson()
-                                                              // return View::make('charges.show', compact('charge'));
+                                                        // return View::make('charges.show', compact('charge'));
     }
 
     /**
@@ -226,7 +226,7 @@ class ChargesController extends BaseController {
         // Persist all
         $charge->save();
         $context = $charge->contexts()->save($context);
-//         Log::debug("created context : " . var_export($context, true));
+        // Log::debug("created context : " . var_export($context, true));
 
         // create/refresh persisted available methods
         $charge->availableMethods()->delete();
@@ -236,10 +236,20 @@ class ChargesController extends BaseController {
     }
 
     private function displayCharge(\Charge $charge, $json = true) {
-        $charge->load('availableMethods', 'contexts');
+        $charge->load('availableMethods', 'contexts', 'transactions');
+        // TODO get information on transactions from ws and display it
         $links = [
             $this->buildLink(URL::route('charges.show', $charge->id, true), 'self', 'get')
         ];
+
+        $wsApi = new VadsWSApi();
+        $wsApi->initialize($charge->shop_key, Config::get("payzenapi.wsdl_url"));
+        $transactions = [];
+        $charge->transactions()
+            ->getResults()
+            ->each(function ($transEnt) use(&$transactions, $wsApi) {
+            $transactions[] = (array)$wsApi->getInfoFromTransaction($transEnt);
+        });
 
         // Update from last context
         $lastContext = $charge->contexts()
@@ -269,7 +279,7 @@ class ChargesController extends BaseController {
         }
 
         // format and return
-        $data = array_merge($charge->toArray(), compact('links', 'messages'));
+        $data = array_merge($charge->toArray(), compact('links', 'messages', 'transactions'));
 
         if ($json) {
             return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);

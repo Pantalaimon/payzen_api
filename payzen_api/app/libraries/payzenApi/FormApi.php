@@ -10,6 +10,8 @@ use \Context;
 
 class FormApi {
 
+    const DATE_FORMAT = 'YmdHis';
+
     public $shop_id, $shop_key, $trans_date, $trans_time, $trans_id;
 
     /**
@@ -23,7 +25,7 @@ class FormApi {
         $this->shop_key = $shop_key;
 
         $this->trans_timestamp = time();
-        $this->trans_date = gmdate('YmdHis', $this->trans_timestamp);
+        $this->trans_date = gmdate(self::DATE_FORMAT, $this->trans_timestamp);
         $this->trans_id = $this->_generateTransId($this->trans_timestamp); // TODO if Cache driver manages it, Cache::increment()
     }
 

@@ -3,7 +3,7 @@ use PayzenApi\PageInfo;
 
 /**
  * An Eloquent Model: 'Context'
- * FIXME trans_time duplicates trans_date !
+ * FIXME trans_time duplicates trans_date ! + apart from locale and charge_id, what is really useful ?
  *
  * @property integer $charge_id
  * @property string $status
